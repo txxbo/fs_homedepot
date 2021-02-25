@@ -1,5 +1,7 @@
 import json
 import scrapy
+from scraper import db
+from scraper.models import Product, User
 from datetime import datetime
 from scraper.items import HomeDepotItem
 
@@ -8,11 +10,18 @@ class HomeDepotSpider(scrapy.Spider):
     name = "home_depot_spider"
     allowed_domains = ["homedepot.com"]
 
+    def __init__(self, url=None, **kwargs):
+        self.url = url
+        super().__init__(**kwargs)
+
     def start_requests(self):
-        urls = [
-            "https://www.homedepot.com/p/Milwaukee-M12-FUEL-12-Volt-Lithium-Ion-Brushless-Cordless-1-4-in-Hex-Impact-Driver-Kit-with-Free-M12-Rotary-Tool-2553-22-2460-20/315477815",
-            "https://www.homedepot.com/p/Milwaukee-M18-FUEL-SURGE-18-Volt-Lithium-Ion-Brushless-Cordless-1-4-in-Hex-Impact-Driver-Tool-Only-2760-20/300193508"
-        ]
+        if self.url is not None:
+            print(self.url)
+            urls = [self.url]
+        else:
+            products = Product.query.filter_by(enabled=True).all()
+            urls = [product.url for product in products]
+
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
@@ -20,11 +29,12 @@ class HomeDepotSpider(scrapy.Spider):
         item = HomeDepotItem()
         data = self.get_json(response)
 
+        item['url'] = response.request.url
         item['title'] = data.get('name', '')
         item['product_id'] = data.get('productID', '')
         item['checked_date'] = datetime.utcnow()
         item['availability'] = False
-        item['price'] = 0
+        item['price'] = 0.0
 
         offers = data.get('offers', None)
         if offers is not None:
@@ -33,7 +43,6 @@ class HomeDepotSpider(scrapy.Spider):
 
             item['price'] = offers.get('price', 0)
 
-        item['notify'] = item['availability']
         yield item
 
     @staticmethod

@@ -8,9 +8,9 @@ from scrapy import Item, Field
 
 class HomeDepotItem(Item):
     product_id = Field()
-    availability = Field()
+    url = Field()
     title = Field()
-    price = Field()
     checked_date = Field()
-    notify = Field()
+    availability = Field()
+    price = Field()
 

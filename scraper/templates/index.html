@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+{% block app_content %}
+<a href="/"><div class="alert alert-success align-center" role="alert" id="update-box" hidden>Updates available. Click to show.</div></a>
+    <form method="POST" action="{{ url_for('index') }}">
+        {{ form.url(class="form-control", placeholder="Enter URL to Scrape and Press Enter") }}
+    </form>
+    <br>
+    {% include '_table.html' %}
+    <br>
+<a href="/scrapeall"><button type="button" class="btn btn-primary start-bg-job">Run Scraper</button></a>
+<br><br>
+<script type="text/javascript">
+$(function() {
+    $(document).ready(setTimeout(function(){get_status();},3000));
+});
+function get_status() {
+    $.ajax({
+        type: 'POST',
+        url: '/update',
+        success: function(data, status, request) {
+            if (data == 'True'){
+                $('#update-box').show()
+            }
+            else { setTimeout(function() { get_status(); }, 3000); }
+        },
+        error: function() {
+            alert('Unexpected error');
+        }
+    });
+}
+</script>
+{% endblock %}
